@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+#define y0 y86274264781
+using namespace std;
+typedef long long ll;
+constexpr int     Inf = 0x3f3f3f3f;
+constexpr ll      INF = 0x3f3f3f3f3f3f3f3f;
+
+const int   N = 1000006;
+int         n, q;
+vector<int> nxt[N];
+int fa[N], siz[N], dep[N], top[N], rnk[N], dfn[N], typ[N], hson[N], lef[N];
+
+int  type = 0;
+void dfs1(int now)
+{
+    siz[now] = 1;
+    if (nxt[now].empty()) {
+        lef[now] = 1;
+        typ[now] = type;
+        return;
+    }
+    if (now == 1) {
+        int t = -1;
+        for (int i : nxt[now]) {
+            dep[i] = dep[now] + 1;
+            dfs1(i);
+            ++type;
+            siz[now] += siz[i];
+            lef[now] += lef[i];
+            if (siz[hson[now]] < siz[i]) hson[now] = i;
+        }
+        return;
+    }
+    for (int i : nxt[now]) {
+        dep[i] = dep[now] + 1;
+        dfs1(i);
+        siz[now] += siz[i];
+        lef[now] += lef[i];
+        if (siz[hson[now]] < siz[i]) hson[now] = i;
+    }
+}
+
+int  cnt = 0;
+void dfs2(int now, int tp = 1)
+{
+    top[now] = tp;
+    dfn[now] = ++cnt;
+    rnk[cnt] = now;
+    if (hson[now])
+        dfs2(hson[now], tp);
+    else
+        return;
+    for (int i : nxt[now]) {
+        if (i == hson[now]) continue;
+        dfs2(i, i);
+    }
+}
+
+int lca(int a, int b)
+{
+    while (top[a] != top[b]) {
+        if (dep[top[a]] > dep[top[b]])
+            a = fa[top[a]];
+        else
+            b = fa[top[b]];
+    }
+    return dep[a] < dep[b] ? a : b;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    cin >> n >> q;
+    for (int i = 2; i <= n; ++i) {
+        cin >> fa[i];
+        nxt[fa[i]].push_back(i);
+    }
+    dfs1(1);
+    dfs2(1);
+
+    // lca(9, 8);
+
+    vector<set<int>> tson(type);  // set存rnk
+    vector<int>      tmp(type);
+
+    int ans1 = 0, ans2 = 0;
+    while (q--) {
+        char op;
+        int  a;
+        cin >> op >> a;
+
+        if (op == '+')
+            tson[typ[a]].insert(dfn[a]);
+        else
+            tson[typ[a]].erase(dfn[a]);
+
+        if (tson[typ[a]].empty()) {  // 从1减为0
+            --ans1;
+        }
+        else if (tson[typ[a]].size() == 1) {
+            if (op == '+') ++ans1;  // 从0增为1
+            ans2 -= tmp[typ[a]];
+            tmp[typ[a]] = 0;
+        }
+        else {
+            int t = lef[lca(rnk[*tson[typ[a]].begin()],
+                            rnk[*tson[typ[a]].rbegin()])] -
+                    tson[typ[a]].size();
+            ans2 += t - tmp[typ[a]];
+            tmp[typ[a]] = t;
+        }
+        // cout << '(' << tmp[typ[a]] << ')' << endl;
+
+        cout << ans1 << ' ' << ans2 << '\n';
+    }
+
+    return 0;
+}
+
+/*
+
+15 100
+1 1 2 2 3 3 4 4 5 5 6 6 7 7
++ 8
++ 9
++ 10
++ 11
+- 8
+
+*/

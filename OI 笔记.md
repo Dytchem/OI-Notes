@@ -1283,3 +1283,107 @@ double f(const P& p1, const P& p2) {
     return min(a, b);
 }
 ```
+***
+### 2024/5/2
+#表达式求值 #逆波兰式
+[表达式求值](https://oi-wiki.org/misc/expression/)
+[MT3035 逆波兰式](https://www.matiji.net/exam/brushquestion/35/3846/4C6668FEB8CFD6520DE73B365B31D1A4)
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define Inf 0x3f3f3f3f
+#define INF 0x3f3f3f3f3f3f3f3f
+// #define int long long
+
+int pri[128];
+inline void init() {
+    pri['+'] = pri['-'] = 1;
+    pri['*'] = pri['/'] = 2;
+}
+
+inline int cal(int a, int b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return a / b;
+    }
+    return 0;
+}
+
+list<ll> dfs() {
+    list<ll> re;
+    stack<char> op;
+    char c;
+    while (cin >> c) {
+        if (c == '(')
+            re.splice(re.end(), dfs());
+        else if (c == ')')
+            break;
+        else if (pri[c]) {
+            while (!op.empty() && pri[op.top()] >= pri[c]) {
+                re.push_back(op.top() + INF);
+                op.pop();
+            }
+            op.push(c);
+        }
+        else
+            re.push_back(c - '0');
+    }
+    while (!op.empty()) {
+        re.push_back(op.top() + INF);
+        op.pop();
+    }
+    return re;
+}
+
+inline void show(list<ll>& a) {
+    for (ll& i : a) {
+        if (i > INF)
+            cout << char(i - INF) << ' ';
+        else
+            cout << i << ' ';
+    }
+    cout << '\n';
+}
+
+inline void work(list<ll>& a) {
+    show(a);
+    for (auto it = a.begin(); it != a.end(); ++it) {
+        if (*it < INF)
+            continue;
+        char op = char(*it - INF);
+        int p = *prev(prev(it)), q = *prev(it);
+        *it = cal(p, q, op);
+        a.erase(prev(it));
+        a.erase(prev(it));
+        show(a);
+    }
+}
+
+signed main() {
+    init();
+    list<ll> a = dfs();
+
+    //	show(a);
+
+    work(a);
+
+    return 0;
+}
+
+```
+输入：
+```
+8-(3+2*6)/5+4
+```
+输出：
+```
+8 3 2 6 * + 5 / - 4 +
+8 3 12 + 5 / - 4 +
+8 15 5 / - 4 +
+8 3 - 4 +
+5 4 +
+9
+```
